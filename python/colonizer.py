@@ -5,6 +5,7 @@ from constants import *
 from legal import actionIsLegal, resolveMoves
 from do import performAction
 from tools import padHex, padBin, listHex, write, writeAll, setWriteIndent
+import MDA
 
 import ai_v1
 import ai_v2
@@ -27,27 +28,18 @@ class Level:
         self.generateEnvironment(width, height, seed)
         
     def generateEnvironment(self, width=119, height=50, seed=False):
-        #Todo: midpoint displacement algorithm
-        
-        if seed: random.seed(seed)
-        
-        xs = [random.uniform(0,2*math.pi)]
-        for i in range(width-1):
-            xs.append(xs[i] + 0.8*random.random())
-            
-        ys = [random.uniform(0,2*math.pi)]
-        for i in range(height-1):
-            ys.append(ys[i] + 0.8*random.random())
-        
+        mdaEnv = MDA.generateEnvironmentMDA(width, height, 100, seed)
+        mdaAve = sum([sum(mdaEnv[i][:width]) for i in range(height)])/(width*height)
         tiles = []
         for y in range(height):
             row = []
             for x in range(width):
-                tile = Tile(math.sin(xs[x])*math.sin(ys[y]) > random.uniform(0.1, 1.0))
+                tile = Tile(mdaEnv[y][x] > mdaAve)
                 if not tile.isWall and random.random() > 0.99:
                     tile.resources = 1 + int(4*math.pow(random.random(), 5))
                 row.append(tile)
             tiles.append(row)
+
         self.tiles = tiles
         
     def spawnTeam(self, ai, size=TEAM_SIZE):
